@@ -20,13 +20,11 @@ services:
     environment:
       - MODEL_PATH=/app/modelo_churn.pkl
       - APP_PORT=8000
-      # Adicione outras variáveis sensíveis aqui (ex: chaves de API)
 
     ports:
       - "8000:8000"   # host:container — acesse em http://localhost:8000
 
     volumes:
-      # Persiste o modelo treinado (útil se você re-treinar sem rebuildar a imagem)
       - model_volume:/app/models
 
     networks:
@@ -52,7 +50,6 @@ services:
 
     environment:
       # Aponta para o serviço "api" dentro da rede Docker
-      # NUNCA use 127.0.0.1 aqui — use o nome do serviço!
       - API_URL=http://api:8000/predict
       - STREAMLIT_PORT=8501
 
