@@ -1,0 +1,82 @@
+version: "3.9"
+
+# ═══════════════════════════════════════════════════════════
+#  Docker Compose — Sistema de Previsão de Churn
+#  Serviços: api (principal) + frontend (apoio)
+# ═══════════════════════════════════════════════════════════
+
+services:
+
+  # ─────────────────────────────────────────────
+  # Container Principal: API FastAPI + XGBoost
+  # ─────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: churn_api
+    restart: unless-stopped
+
+    environment:
+      - MODEL_PATH=/app/modelo_churn.pkl
+      - APP_PORT=8000
+      # Adicione outras variáveis sensíveis aqui (ex: chaves de API)
+
+    ports:
+      - "8000:8000"   # host:container — acesse em http://localhost:8000
+
+    volumes:
+      # Persiste o modelo treinado (útil se você re-treinar sem rebuildar a imagem)
+      - model_volume:/app/models
+
+    networks:
+      - churn_network
+
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─────────────────────────────────────────────
+  # Container de Apoio: Dashboard Streamlit
+  # ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: churn_frontend
+    restart: unless-stopped
+
+    environment:
+      # Aponta para o serviço "api" dentro da rede Docker
+      # NUNCA use 127.0.0.1 aqui — use o nome do serviço!
+      - API_URL=http://api:8000/predict
+      - STREAMLIT_PORT=8501
+
+    ports:
+      - "8501:8501"   # acesse em http://localhost:8501
+
+    depends_on:
+      api:
+        condition: service_healthy   # aguarda a API estar saudável antes de subir
+
+    networks:
+      - churn_network
+
+# ─────────────────────────────────────────────
+# Rede compartilhada entre os containers
+# ─────────────────────────────────────────────
+networks:
+  churn_network:
+    driver: bridge
+    name: churn_network
+
+# ─────────────────────────────────────────────
+# Volume para persistência do modelo
+# ─────────────────────────────────────────────
+volumes:
+  model_volume:
+    driver: local
