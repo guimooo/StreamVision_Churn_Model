@@ -31,12 +31,33 @@ docker compose up --build
 | API docs  | http://localhost:8000/docs   |
 | API JSON  | http://localhost:8000/predict|
 
-### 5. Parar os containers
+* Para testar o predict via terminal (bash):
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idade": 30,
+    "renda_mensal": 3000.0,
+    "tenure_dias": 365,
+    "total_pago": 2000.0,
+    "ticket_medio": 150.0,
+    "total_minutos": 1200.0,
+    "media_minutos": 100.0,
+    "consumo_recente": 60.0,
+    "minutos_por_dia_ativo": 40.0,
+    "pct_consumo_Documentario": 20.0,
+    "pct_consumo_Infantil": 5.0,
+    "diversificacao_categoria": 3.0
+  }'
+```
+
+### 3. Parar os containers
 ```bash
 docker compose down
 ```
 
-### 6. Parar e remover volumes
+### 4. Parar e remover volumes
 ```bash
 docker compose down -v
 ```
