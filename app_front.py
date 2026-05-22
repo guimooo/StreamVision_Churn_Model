@@ -1,9 +1,12 @@
+import os
 import streamlit as st
 import requests
 
 st.set_page_config(page_title="Previsão de Churn", page_icon="📊")
 st.title("📊 Previsão de Churn de Clientes")
 st.write("Insira os dados do cliente para prever o risco de cancelamento.")
+
+url_api = os.getenv("API_URL", "http://127.0.0.1:8000/predict")
 
 with st.form("form_cliente"):
     col1, col2 = st.columns(2)
@@ -27,7 +30,6 @@ with st.form("form_cliente"):
     submit_button = st.form_submit_button(label="🔮 Prever Risco")
 
 if submit_button:
-    # Chaves batendo letra por letra com o esperado pela API
     dados_para_api = {
         "idade": int(idade),
         "renda_mensal": float(renda_mensal),
@@ -42,12 +44,10 @@ if submit_button:
         "pct_consumo_Infantil": float(pct_consumo_Infantil),
         "diversificacao_categoria": float(diversificacao_categoria)
     }
-    
-    url_api = "http://127.0.0.1:8000/predict"
-    
+
     try:
         with st.spinner('Analisando perfil do cliente...'):
-            resposta = requests.post(url_api, json=dados_para_api)
+            resposta = requests.post(url_api, json=dados_para_api, timeout=10)
             
             if resposta.status_code == 200:
                 resultado = resposta.json()
@@ -60,4 +60,6 @@ if submit_button:
                 st.write(resposta.json())
                 
     except requests.exceptions.ConnectionError:
-        st.error("Erro de conexão: O servidor da API (Uvicorn) está rodando?")
+        st.error(f"Erro de conexão: não foi possível alcançar a API em {url_api}. O container da API está rodando?")
+    except requests.exceptions.Timeout:
+        st.error("Tempo limite excedido. A API demorou muito para responder.")
